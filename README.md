@@ -91,6 +91,7 @@ resource "aws_s3_bucket" "domain" {
   }
 }
 ```
+
 In this file, the domain is specified by `${data.terraform_remote_state.variables.outputs.domain}`. In order to use this variable we first need to export the variables folder state:
 <h5 a><strong><code>vi storage/storage-www/exportbackend.tf</code></strong></h5>
 ```
