@@ -182,6 +182,7 @@ Again, I exported the `global/variables` backend using the `exportbackend.tf` fi
 My approach was to redirect the distribution to the S3 bucket endpoint that serves the website by means of an Alias record deployed in Route53:
 
 <h5 a><strong><code>vi services/cloudfront-www/route53_record.tf</code></strong></h5>
+
 ```
 resource "aws_route53_record" "www" {
   provider                     =  aws.Domain
@@ -200,6 +201,7 @@ resource "aws_route53_record" "www" {
 The distribution can be simply deployed using the `start.sh` bash script.
 
 <h5 a><strong><code>cd services/cloudfront-www</code></strong></h5>
+
 ```
 bash start.sh
 ```
