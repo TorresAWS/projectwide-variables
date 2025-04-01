@@ -34,6 +34,7 @@ I previously described how to set up Terraform's state.
 I will first enter in the `global/variables` folder, where all Global variables are defined. There are many ways to define variables: as a variables files, as a json file, etc. I choose to define each variable (e.g. domain-var) as a single file (e.g. domain-var.tf) for simplicity, so that by listing the files in the folder you can see what variables are defined. Let us take a look at one of the variable files:
 
 <h5 a><strong><code>vi global/variables/domain-var.tf</code></strong></h5>
+
 ```
 variable "domain" {
 # domain name
@@ -45,6 +46,7 @@ variable "domain" {
 Every input variable here needs to be accompanied by an output variable that prints the value of the variable
 
 <h5 a><strong><code>vi global/variables/output.tf</code></strong></h5>
+
 ```
 output "domain" {
   description = ""
@@ -56,6 +58,7 @@ output "domain" {
 By simply executing the start.sh file you can define all input variables in the folder and populate all outputs.
 
 <h5 a><strong><code>cd global/variables</code></strong></h5>
+
 ```
 bash start.sh
 ```
@@ -64,6 +67,7 @@ bash start.sh
 Here I will explain how to use Terraform's backend in order to create a centralized folder containing all project-wide variables by using a simple example, where I depploy a plain website statically in AWS and serve it using a CloudFront distribution. In ider to do this, first I need to create a hosted zone and obtain a SSL/TLS certificate. I will enter the `vpcs` folder and create a hosted zone to then obtain a SSL/TLS certificate:
 
 <h5 a><strong><code>cd vpcs</code></strong></h5>
+
 ```
 cd zone; bash start.sh
 cd ../certs ; bash start.sh
@@ -73,12 +77,15 @@ cd ../certs ; bash start.sh
 Now we are ready to start the storage service that will host the website. 
 
 <h5 a><strong><code>cd storage/storage-www</code></strong></h5>
+
 ```
 bash start.sh
 ```
+
 At this point we can address how global variables work. In order to statically host a website, we need to create a bucket with the domain name. Let us take a look at the `bucket.tf` file
 
 <h5 a><strong><code>vi storage/storage-www/bucket.tf</code></strong></h5>
+
 ```
 resource "aws_s3_bucket" "domain" {
   provider      =  aws.Infrastructure
@@ -93,7 +100,9 @@ resource "aws_s3_bucket" "domain" {
 ```
 
 In this file, the domain is specified by `${data.terraform_remote_state.variables.outputs.domain}`. In order to use this variable we first need to export the variables folder state:
+
 <h5 a><strong><code>vi storage/storage-www/exportbackend.tf</code></strong></h5>
+
 ```
 data "terraform_remote_state" "variables" {
    backend = "s3"
@@ -111,6 +120,7 @@ data "terraform_remote_state" "variables" {
 Now I will deploy Cloudfront's distribution. CloudFront is an AWS service used to distribute content with the help of a network of servers around the world. Terraform's Cloudfront resource is shown below
 
 <h5 a><strong><code>vi services/cloudfront-www/cloudfront.tf</code></strong></h5>
+
 ```
 resource "aws_cloudfront_distribution" "domain" {
   origin {
