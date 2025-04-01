@@ -1,3 +1,4 @@
+
 ## Table of contents
 1. [Introduction](#introduction)
 2. [Goal: define project-wide variables when deploying infrastructure](#goal)
@@ -12,7 +13,7 @@
 ## Introduction <a name="introduction"></a>
 When deploying infrastructure, Terraform uses different types of variables, inputs, outputs, and locals, to define or describe infrastructure characteristics. In significant infrastructural developments, with numerous pieces of infrastructure, the same information is sometimes needed for different infrastructural parts. For example, a domain name is needed to create a hosted zone, obtain an SSL/TLS certificate, and to deploy a CloudFront distribution. Project-wide variables, also known as global variables in general programming would help us solve this need. Unfortunately, Terraform does not have global variables _per se_, and only inputs and local variables can be used to define infrastructural features. Still, when using Terraform there are smarter and more efficient ways to work that can help us bypass the lack of global variables.
 
-Here I will show how to use Terraform's backend in order to create a centralized folder containing all project-wide variables that can be used in any piece of infrastructure deployed underneath the project's umbrella. This work practice can lead to minimizing the number of meaningful variables employed in a Terraform project.
+Here I will show how to use Terraform's backend to create a centralized folder containing all project-wide variables that can be used in any piece of infrastructure deployed underneath the project's umbrella. This work practice can lead to minimizing the number of meaningful variables employed in a Terraform project.
 
 ## Goal: use multiple profiles when deploying infrastructure <a name="goal"></a>
 <div class="alert alert-block alert-info">
@@ -20,18 +21,18 @@ Here I describe a technique to create project-wide variables when deploying infr
 </div>
 
 ## Types of variable in Terraform <a name="Variable"></a>
-Terraform's documentation does an excellent work describing the different types of variables used to create infrastructure. Here I will just give a small summary, while introducing Global variables, a foreigh idea in Terraform.
+Terraform's documentation does an excellent work describing the different types of variables used to create infrastructure. Here I will just give a small summary while introducing Global variables, a foreign idea in Terraform.
 
-On one hand, input variables are declared by means of the `variable` block. Variable declaration have numerous optional arguments, such variable type (string, number, bool), a default tag (sets the default variable value), a description tag (an explanation of the variable's purpose), a sensitive tag (if true, Terraform hides its value from plan or apply output), ephemereal tag (if true the variable is available during runtime but ommited from state and plan files), a nullable tag (if true the variable cannot be set to null), among others. On the other hand, output values, are very different that input variables, informing about the infrastructure available on the command line. Locals are indeed different than input variables, assign a name to an expression or a value and are used to avoid the repeated use of expressions or values.
+On one hand, input variables are declared using the `variable` block. Variable declaration has numerous optional arguments, such as variable type (string, number, bool), a default tag (sets the default variable value), a description tag (an explanation of the variable's purpose), a sensitive tag (if true, Terraform hides its value from plan or apply output), ephemeral tag (if true the variable is available during runtime but omitted from state and plan files), a nullable tag (if true the variable cannot be set to null), among others. On the other hand, output values, are very different from input variables, informing about the infrastructure available on the command line. Locals are indeed different than input variables, assign a name to an expression or a value, and are used to avoid the repeated use of expressions or values.
 
 
 ## A lack of global variables in Terraform <a name="Project-wide"></a>
-In Terraform each folder normally contains a piece of infrastructure. As such each folder should have its own input, output and locals. In programming, a global variable is a variable declared outside of any function, making it accessible from anywhere within the program. However, Terraform used a domain-specific configuration language called HashiCorp Configuration Language to define infrastructure and the concept of global variable, available for every module, is not defined.
+In Terraform each folder normally contains a piece of infrastructure. As such each folder should have its input, output, and locals. In programming, a global variable is a variable declared outside of any function, making it accessible from anywhere within the program. However, Terraform used a domain-specific configuration language called HashiCorp Configuration Language to define the infrastructure, and the concept of a global variable, available for every module, is not defined.
 
 ## A variables folder <a name="A-variables-folder"></a>
-A way to bypass the lack of global variables in Terraform is to first use a centralized variable folder with an exported state and to then import that state anytime variables are needed in the project. I will descrive next how to do this. 
+A way to bypass the lack of global variables in Terraform is to first use a centralized variable folder with an exported state and to then import that state anytime variables are needed in the project. I will describe next how to do this. 
 I previously described how to set up Terraform's state.
-I will first enter in the `global/variables` folder, where all Global variables are defined. There are many ways to define variables: as a variables files, as a json file, etc. I choose to define each variable (e.g. domain-var) as a single file (e.g. domain-var.tf) for simplicity, so that by listing the files in the folder you can see what variables are defined. Let us take a look at one of the variable files:
+I will first enter the `global/variables` folder, where all Global variables are defined. There are many ways to define variables: as a variables file, as a JSON file, etc. I choose to define each variable (e.g. domain-var) as a single file (e.g. domain-var.tf) for simplicity, so that by listing the files in the folder you can see what variables are defined. Let us take a look at one of the variable files:
 
 <h5 a><strong><code>vi global/variables/domain-var.tf</code></strong></h5>
 
@@ -43,7 +44,7 @@ variable "domain" {
 }
 ```
 
-Every input variable here needs to be accompanied by an output variable that prints the value of the variable
+Every input variable here needs to be accompanied by an output variable that prints the value of the variable.
 
 <h5 a><strong><code>vi global/variables/output.tf</code></strong></h5>
 
@@ -64,7 +65,7 @@ bash start.sh
 ```
 
 ## Case study: AWS CloudFront distribution to serve a static website <a name="Case-study"></a>
-Here I will explain how to use Terraform's backend in order to create a centralized folder containing all project-wide variables by using a simple example, where I depploy a plain website statically in AWS and serve it using a CloudFront distribution. In ider to do this, first I need to create a hosted zone and obtain a SSL/TLS certificate. I will enter the `vpcs` folder and create a hosted zone to then obtain a SSL/TLS certificate:
+Here I will explain how to use Terraform's backend in order to create a centralized folder containing all project-wide variables by using a simple example, where I develop a plain website statically in AWS and serve it using a CloudFront distribution. In order to do this, first I need to create a hosted zone and obtain an SSL/TLS certificate. I will enter the `vpcs` folder and create a hosted zone to then obtain an SSL/TLS certificate:
 
 <h5 a><strong><code>cd vpcs</code></strong></h5>
 
@@ -82,7 +83,7 @@ Now we are ready to start the storage service that will host the website.
 bash start.sh
 ```
 
-At this point we can address how global variables work. In order to statically host a website, we need to create a bucket with the domain name. Let us take a look at the `bucket.tf` file
+At this point, we can address how global variables work. To statically host a website, we need to create a bucket with the domain name. Let us take a look at the `bucket.tf` file
 
 <h5 a><strong><code>vi storage/storage-www/bucket.tf</code></strong></h5>
 
@@ -99,8 +100,7 @@ resource "aws_s3_bucket" "domain" {
 }
 ```
 
-In this file, the domain is specified by `${data.terraform_remote_state.variables.outputs.domain}`. In order to use this variable we first need to export the variables folder state:
-
+In this file, the domain is specified by `${data.terraform_remote_state.variables.outputs.domain}`. To use this variable we first need to export the variables folder state:
 <h5 a><strong><code>vi storage/storage-www/exportbackend.tf</code></strong></h5>
 
 ```
@@ -117,7 +117,7 @@ data "terraform_remote_state" "variables" {
 
 
 ## Cloudfront distribution <a name="Cloudfront"></a>
-Now I will deploy Cloudfront's distribution. CloudFront is an AWS service used to distribute content with the help of a network of servers around the world. Terraform's Cloudfront resource is shown below
+Now I will deploy Cloudfront's distribution. CloudFront is an AWS service used to distribute content with the help of a network of servers around the world. Terraform's Cloudfront resource is shown below.
 
 <h5 a><strong><code>vi services/cloudfront-www/cloudfront.tf</code></strong></h5>
 
@@ -177,9 +177,9 @@ resource "aws_cloudfront_distribution" "domain" {
 }
 ```
 
-There are numerous options to configure the service and I will refer to AWS's documenatation for that. 
-Again, I exported the `global/variables` backend using the `exportbackend.tf` file as the `${data.terraform_remote_state.variables.outputs.domain}` variable is used here. At the same time, the distribution requires a SSL certificate in order to serve https connections.
-My approach was to redirect the distribution to the S3 bucket endpoint that serves the website by means of an Alias record deployed in Route53:
+There are numerous options to configure the service and I will refer to AWS's documentation for that. 
+Again, I exported the `global/variables` backend using the `exportbackend.tf` file as the `${data.terraform_remote_state.variables.outputs.domain}` variable is used here. At the same time, the distribution requires an SSL certificate to serve https connections.
+My approach was to redirect the distribution to the S3 bucket endpoint that serves the website using an Alias record deployed in Route53:
 
 <h5 a><strong><code>vi services/cloudfront-www/route53_record.tf</code></strong></h5>
 
@@ -206,7 +206,7 @@ The distribution can be simply deployed using the `start.sh` bash script.
 bash start.sh
 ```
 
-The distribution's URL will be displayed after deploying the distribution and would look like below with a different ID:
+The distribution's URL will be displayed after deploying the distribution and will look like the below with a different ID:
 
 ```
 https://d54xdzk7wxeez.cloudfront.net
@@ -214,10 +214,6 @@ https://d54xdzk7wxeez.cloudfront.net
 
 ## Conclusion: project-wide variables are useful for sharing data among projects <a name="conclusion"></a>
 <div class="alert alert-block alert-info">
-Here I decribe how to use project-wide variables by means of importing and exporting the state of a single `global/variables` folder, when deploying infrastructure with Terraform.
+Here I describe how to use project-wide variables by means of importing and exporting the state of a single `global/variables` folder when deploying infrastructure with Terraform.
 </div>
 
-
- 
- 
- 
