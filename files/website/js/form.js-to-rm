@@ -1,0 +1,58 @@
+document.getElementById('submitButton').addEventListener('submit', function(event) {
+window.location.href = 'practitioners.html';
+//  console.log("The value of myVariable is:")
+//  setTimeout(function() { debugger; }, 5000);
+//  window.location.href = 'practitioners.html';
+//  event.preventDefault(); // Prevent form submission
+
+  // Validate form inputs
+//  var name = document.getElementById('name').value.trim();
+//  var email = document.getElementById('email').value.trim();
+//  var subject = document.getElementById('subject').value.trim();
+//  var message = document.getElementById('message').value.trim();
+
+  // Email validation using a regular expression
+  var emailRegex = /^\S+@\S+\.\S+$/;
+  if (!name || !email || !subject || !message || !emailRegex.test(email)) {
+    alert('Please fill in all fields with valid inputs.');
+    return;
+  }
+
+  // Construct the form data
+  var formData = {
+    name: name,
+    email: email,
+    subject: subject,
+    message: message
+  };
+
+  // Perform form submission
+ // submitForm(formData);
+});
+
+
+
+
+function submitForm(formData) {
+   
+  fetch('https://8x0ykqdt91.execute-api.us-east-1.amazonaws.com/test/api', { 
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json: charset=UTF-8'
+    },
+//    body: JSON.stringify(formData)
+    body: JSON.stringify({    "email" : "dam@gmail.com"  })
+  })
+  .then(function(response) {
+    if (response.ok) {
+      // Redirect to the thank you page
+      window.location.href = 'practitioners.html';
+    } else {
+      throw new Error('Form submission failed.');
+    }
+  })
+  .catch(function(error) {
+    console.error(error);
+    alert('Form submission failed. Please try again later.');
+  });
+}
