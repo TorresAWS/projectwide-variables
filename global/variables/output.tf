@@ -8,14 +8,6 @@ output "account_id" {
 output "region" {
   value = data.aws_region.current.name
 }
-output "ses-email" {
-  description = ""
-  value       = var.ses-email  
+output "backendname" {
+  value = var.backendname
 }
-output "bucket-name" {
-  description = ""
-  value       = var.bucket-name  
-}
-
-
-

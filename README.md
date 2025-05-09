@@ -1,4 +1,3 @@
-
 ## Table of contents
 1. [Introduction](#introduction)
 2. [Goal: define project-wide variables when deploying infrastructure](#goal)
@@ -15,13 +14,13 @@ When deploying infrastructure, Terraform uses different types of variables, inpu
 
 Here I will show how to use Terraform's backend to create a centralized folder containing all project-wide variables that can be used in any piece of infrastructure deployed underneath the project's umbrella. This work practice can lead to minimizing the number of meaningful variables employed in a Terraform project.
 
-## Goal: use multiple profiles when deploying infrastructure <a name="goal"></a>
+## Goal: define project-wide variables when deploying infrastructure <a name="goal"></a>
 <div class="alert alert-block alert-info">
 Here I describe a technique to create project-wide variables when deploying infrastructure with Terraform.
 </div>
 
 ## Types of variable in Terraform <a name="Variable"></a>
-Terraform's documentation does an excellent work describing the different types of variables used to create infrastructure. Here I will just give a small summary while introducing Global variables, a foreign idea in Terraform.
+Terraform's documentation does an excellent job describing the different types of variables used to create infrastructure. Here I will just give a small summary while introducing Global variables, a foreign idea in Terraform.
 
 On one hand, input variables are declared using the `variable` block. Variable declaration has numerous optional arguments, such as variable type (string, number, bool), a default tag (sets the default variable value), a description tag (an explanation of the variable's purpose), a sensitive tag (if true, Terraform hides its value from plan or apply output), ephemeral tag (if true the variable is available during runtime but omitted from state and plan files), a nullable tag (if true the variable cannot be set to null), among others. On the other hand, output values, are very different from input variables, informing about the infrastructure available on the command line. Locals are indeed different than input variables, assign a name to an expression or a value, and are used to avoid the repeated use of expressions or values.
 
@@ -54,6 +53,63 @@ output "domain" {
   value       = var.domain
 }
 ```
+
+Now, a key point is that these variables will be used in different project folders. For example, the `domain-var.tf` variable will be need in the `/vpc/zone` forlder. In order to address that, we will export the variables into that folder by means of a local resource defined in the `exportbackend-to-vpc-zone.tf` file. For example
+
+<h5 a><strong><code>vi /vpc/zone/exportbackend-to-vpc-zone.tf</code></strong></h5>
+
+```
+resource "local_file" "exportbackend-to-vpc-zone" {
+    content  = <<EOF
+data "terraform_remote_state" "variables" {
+   backend = "s3"
+   config = {
+        key = "global/variables/variables.tfstate"
+        region = "us-east-1"
+        profile  = "Infrastructure"
+        bucket  = "${var.backendname}"
+   }
+}
+    EOF
+    filename = "../../vpcs/zone/backend-exported-from-global-variables.tf"
+}
+```
+
+What this file does is to create a file called  `backend-exported-from-global-variables.tf` in the `/vpcs/zone` folder. This file will automatically refer to the backend and hence inherit all variables defined in the variables folder. We could do this by hand by creating an equivalent file in the `/vpcs/zone` folder but we will have to type the backendname. By using a local resurce we can automatically include this variable and avoid repetition. By analyzing the files in `/global/variables` we can see how variables are exported into the `/vpc/certs`, `/vpc/zone`, `/services/cloudfront-www`, and `/storage/storage-www` folders. That means that in all these folders we can use any variable defined in the variables folder.
+I apply this principle to export variables defined in any of the services variables. For example, in the `/vpc/zone` folder I define an output variable called `zone_id` that will be needed in the `/vpc/certs` in order to create certificates. As such, I will export the variable using the file
+ 
+<h5 a><strong><code>vi /vpc/zone/exportbackend-to-vpcs-certs.tf</code></strong></h5>
+
+```
+resource "local_file" "exportbackend-to-vpc-certs" {
+    content  = <<EOF
+data "terraform_remote_state" "zone" {
+   backend = "s3"
+   config = {
+        key = "vpcs/zone/zone.tfstate"
+        region = "us-east-1"
+        profile  = "Infrastructure"
+        bucket  = "${data.terraform_remote_state.variables.outputs.backendname}"
+   }
+}
+    EOF
+    filename = "../../vpcs/certs/backend-exported-from-vpcs-zone.tf"
+    depends_on = [data.terraform_remote_state.variables ]
+}
+```  
+
+By analyzing a folder (`/vpcs/zone) we can indeed see where the variables come from and where do they go:
+
+<h5 a><strong><code>ls /vpcs/zone</code></strong></h5>
+
+```
+backend-exported-from-global-variables.tf	route53-domains_registered_domain.tf
+cloud.tf					route53_zone.tf
+exportbackend-to-services-cloudfront-www.tf	start.sh
+exportbackend-to-vpcs-certs.tf			terraform.tf
+output.tf 
+```  
+
 
 
 By simply executing the start.sh file you can define all input variables in the folder and populate all outputs.
@@ -101,6 +157,7 @@ resource "aws_s3_bucket" "domain" {
 ```
 
 In this file, the domain is specified by `${data.terraform_remote_state.variables.outputs.domain}`. To use this variable we first need to export the variables folder state:
+
 <h5 a><strong><code>vi storage/storage-www/exportbackend.tf</code></strong></h5>
 
 ```
